@@ -1,7 +1,7 @@
 /* eslint-disable react/no-unescaped-entities */
 import { useState, useEffect, useRef } from 'react';
 import emailjs from '@emailjs/browser';
-import { FaBolt, FaMoneyBillWave, FaUserGraduate, FaInstagram, FaLinkedin, FaGithub } from "react-icons/fa";
+import { FaBolt, FaHandshake, FaMoneyBillWave, FaUserGraduate, FaInstagram, FaLinkedin, FaGithub } from "react-icons/fa";
 import './App.css';
 
 const App = () => {
@@ -44,35 +44,40 @@ const App = () => {
   };
 
   const projectsData = [
-    {
-      id: 1,
-      title: "Student Management System",
-      description: "A comprehensive system to manage student records, grades, and attendance with intuitive dashboard.",
-      technologies: "React, Node.js, MongoDB",
-      image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1171&q=80"
-    },
-    {
-      id: 2,
-      title: "College Event Planner",
-      description: "Platform for organizing and managing college events, workshops, and student activities.",
-      technologies: "React, Firebase, CSS3",
-      image: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwa90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80"
-    },
-    {
-      id: 3,
-      title: "E-Learning Platform",
-      description: "Interactive learning platform with course materials, quizzes, and progress tracking.",
-      technologies: "React, Express, MySQL",
-      image: "https://images.unsplash.com/photo-1501504905252-473c47e087f8?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80"
-    },
-    {
-      id: 4,
-      title: "Campus Navigation App",
-      description: "Mobile application to help students navigate college campuses with indoor mapping.",
-      technologies: "React Native, Google Maps API",
-      image: "https://images.unsplash.com/photo-1618005198919-d3d4b5a92ead?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1074&q=80"
-    }
-  ];
+  {
+    id: 1,
+    title: "Portfolio Website",
+    description: "A sleek and responsive personal portfolio site built to showcase projects, skills, and achievements. Features smooth animations, email integration via EmailJS, and a modern UI tailored for students and professionals.",
+    technologies: "React, EmailJs",
+    image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1171&q=80",
+    url: "https://sumangoswami.vercel.app/"
+  },
+  {
+  id: 2,
+  title: "Music Listening Platform",
+  description: "A modern web app for streaming and discovering music. Built with HTML, CSS and JavaScript, it allows users to explore tracks, create playlists, and enjoy a smooth, student-friendly listening experience with a responsive design.",
+  technologies: "HTML5, CSS3, JavaScript",
+  image: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwa90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80",
+  url: "https://beats-snowy.vercel.app/"
+  },
+  {
+    id: 3,
+    title: "Mental Health Care Platform",
+    description: "A student-friendly mental wellness platform focused on awareness and support. Provides interactive modules, self-help resources, and engaging UI elements built with HTML, CSS, and JavaScript for accessibility and impact.",
+    technologies: "HTML5, CSS3, JavaScript",
+    image: "https://images.unsplash.com/photo-1501504905252-473c47e087f8?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80",
+    url: "https://vdhur.netlify.app/"
+  },
+  {
+    id: 4,
+    title: "MyRupaya Chatbot",
+    description: "An AI-powered financial chatbot that helps users find the best credit cards based on their lifestyle. Built with React Native and Firebase, it provides real-time recommendations, secure login, and an engaging mobile experience.",
+    technologies: "React Native, Expo, Firebase",
+    image: "https://images.unsplash.com/photo-1618005198919-d3d4b5a92ead?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1074&q=80",
+    url: "https://myrupaya-ai.vercel.app/"
+  }
+];
+
 
   const technologiesData = [
     { name: "HTML", icon: "🟧", level: 95 },
@@ -187,7 +192,7 @@ const App = () => {
       <div className="circle circle-1"></div>
       <div className="circle circle-2"></div>
       <div className="circle circle-3"></div>
-      <div className="central-icon"><FaBolt size={60} color="#6C63FF" /></div>
+      <div className="central-icon"><FaHandshake size={80} color="#FFFFFF" /></div>
     </div>
   </div>
   <div className="floating-card card-1">
@@ -215,7 +220,7 @@ const App = () => {
                 <div className="project-image">
                   <img src={project.image} alt={project.title} />
                   <div className="project-overlay">
-                    <button className="project-btn">View Details</button>
+                    <button className="project-btn" onClick={() => window.open(project.url, "_blank")}>View Details</button>
                   </div>
                 </div>
                 <div className="project-info">
