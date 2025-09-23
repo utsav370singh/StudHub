@@ -1,7 +1,8 @@
 /* eslint-disable react/no-unescaped-entities */
 import { useState, useEffect, useRef } from 'react';
 import emailjs from '@emailjs/browser';
-import { FaBolt, FaHandshake, FaMoneyBillWave, FaUserGraduate, FaInstagram, FaLinkedin, FaGithub } from "react-icons/fa";
+import { FaBolt, FaHandshake, FaMoneyBillWave, FaUserGraduate, FaLinkedin, FaGithub, FaEnvelope, FaWhatsapp, FaPhone, FaInstagram} from "react-icons/fa";
+
 import './App.css';
 
 const App = () => {
@@ -239,8 +240,8 @@ const App = () => {
       {/* Technologies Section */}
       <section id="technologies" className="technologies">
         <div className="container">
-          <h2 className="section-title">Technologies I Work With</h2>
-          <p className="section-subtitle">I use a wide range of technologies to build modern, responsive applications</p>
+          <h2 className="section-title">Technologies We Work With</h2>
+          <p className="section-subtitle">We use a wide range of technologies to build modern, responsive applications</p>
           
           <div className="technologies-grid">
             {technologiesData.map((tech, index) => (
@@ -301,39 +302,77 @@ const App = () => {
 
         {/* Contact Section */}
       <section id="contact" className="contact">
-        <div className="container">
-          <h2 className="section-title">Get In Touch</h2>
-          <p className="section-subtitle">Let's discuss your project and find a solution that fits your budget</p>
-          
-          <div className="contact-methods">
-            <div className="contact-card">
-              <div className="contact-icon">📧</div>
-              <h3>Email</h3>
-              <p>Send me a detailed message</p>
-              <a href="mailto:utsav25singh@gmail.com" className="btn-contact">Email Now</a>
-            </div>
-            
-            <div className="contact-card">
-              <div className="contact-icon">💬</div>
-              <h3>WhatsApp</h3>
-              <p>Chat with us directly on WhatsApp</p>
-              <a href="https://wa.me/9079956406" className="btn-contact" target="_blank" rel="noopener noreferrer">Message Now</a>
-            </div>
-            
-            <div className="contact-card">
-              <div className="contact-icon">📞</div>
-              <h3>Call</h3>
-              <p>Let's talk about your project on a Call</p>
-              <a href="tel:+919079956406" className="btn-contact">Call Now</a>
-            </div>
-            
-            <div className="contact-card">
-              <div className="contact-icon">📱</div>
-              <h3>Instagram</h3>
-              <p>DM me for quick responses on Instagram</p>
-              <a href="https://instagram.com/yourprofile" className="btn-contact" target="_blank" rel="noopener noreferrer">DM Now</a>
-            </div>
-          </div>
+  <div className="container">
+    <h2 className="section-title">Get In Touch</h2>
+    <p className="section-subtitle">
+      Let's discuss your project and find a solution that fits your budget
+    </p>
+
+    <div className="contact-methods">
+      {/* Email */}
+      <div className="contact-card">
+        <div className="contact-icon">
+          <FaEnvelope size={40} color="#D44638" /> {/* Gmail red */}
+        </div>
+        <h3>Email</h3>
+        <p>Send me a detailed message</p>
+        <a
+          href="https://mail.google.com/mail/?view=cm&fs=1&to=studhub22@gmail.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn-contact"
+        >
+          Email Now
+        </a>
+      </div>
+
+      {/* WhatsApp */}
+      <div className="contact-card">
+        <div className="contact-icon">
+          <FaWhatsapp size={40} color="#25D366" />
+        </div>
+        <h3>WhatsApp</h3>
+        <p>Chat with us directly on WhatsApp</p>
+        <a
+          href="https://wa.me/919079956406"
+          className="btn-contact"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Message Now
+        </a>
+      </div>
+
+      {/* Call */}
+      <div className="contact-card">
+        <div className="contact-icon">
+          <FaPhone size={40} color="#007BFF" />
+        </div>
+        <h3>Call</h3>
+        <p>Let's talk about your project on a Call</p>
+        <a href="tel:+919079956406" className="btn-contact">
+          Call Now
+        </a>
+      </div>
+
+      {/* Instagram */}
+      <div className="contact-card">
+        <div className="contact-icon">
+          <FaInstagram size={40} color="#E1306C" />
+        </div>
+        <h3>Instagram</h3>
+        <p>DM me for quick responses on Instagram</p>
+        <a
+          href="https://www.instagram.com/direct/t/17843001501580857/"
+          className="btn-contact"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          DM Now
+        </a>
+      </div>
+    </div>
+  
 
           <div className="contact-form">
             <h3>Send me a message directly</h3>
