@@ -722,34 +722,77 @@ const App = () => {
             </div>
 
             {/* Contact Methods */}
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8 md:mb-12">
-              {[
-                { icon: FaEnvelope, color: "red", label: "Email", href: "https://mail.google.com/mail/?view=cm&fs=1&to=studhub22@gmail.com", text: "Send me a detailed message" },
-                { icon: FaWhatsapp, color: "green", label: "WhatsApp", href: "https://wa.me/919079956406", text: "Chat with me directly" },
-                { icon: FaPhone, color: "blue", label: "Call", href: "tel:+919079956406", text: "Let's talk about your project" },
-                { icon: FaInstagram, color: "pink", label: "Instagram", href: "https://www.instagram.com/direct/t/17843001501580857/", text: "DM me for quick responses" }
-              ].map((method, index) => (
-                <div key={index} className="bg-white/10 dark:bg-gray-800/80 rounded-xl p-4 md:p-6 text-center shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20 backdrop-blur-sm">
-                  <div className={`w-12 h-12 md:w-16 md:h-16 bg-${method.color}-100 dark:bg-${method.color}-900 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4`}>
-                    <method.icon className={`text-${method.color}-600 dark:text-${method.color}-400 text-xl md:text-2xl`} />
-                  </div>
-                  <h3 className="text-base md:text-lg font-semibold text-gray-900 dark:text-white mb-2">{method.label}</h3>
-                  <p className="text-gray-600 dark:text-gray-300 mb-3 md:mb-4 text-sm md:text-base">{method.text}</p>
-                  <a
-                    href={method.href}
-                    target={method.href.startsWith('http') ? "_blank" : undefined}
-                    rel={method.href.startsWith('http') ? "noopener noreferrer" : undefined}
-                    className={`inline-block bg-${method.color}-600 hover:bg-${method.color}-700 text-white px-4 py-2 md:px-6 md:py-2 rounded-full font-medium transition-colors duration-300 text-sm md:text-base`}
-                  >
-                    {method.label} Now
-                  </a>
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+              {/* Email */}
+              <div className="bg-white/10 dark:bg-gray-800/80 rounded-xl p-6 text-center shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20 backdrop-blur-sm">
+                <div className="w-16 h-16 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <FaEnvelope className="text-red-600 dark:text-red-400 text-2xl" />
                 </div>
-              ))}
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Email</h3>
+                <p className="text-gray-600 dark:text-gray-300 mb-4">Send me a detailed message</p>
+                <a
+                  href="https://mail.google.com/mail/?view=cm&fs=1&to=studhub22@gmail.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-full font-medium transition-colors duration-300"
+                >
+                  Email Now
+                </a>
+              </div>
+
+              {/* WhatsApp */}
+              <div className="bg-white/10 dark:bg-gray-800/80 rounded-xl p-6 text-center shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20 backdrop-blur-sm">
+                <div className="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <FaWhatsapp className="text-green-600 dark:text-green-400 text-2xl" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">WhatsApp</h3>
+                <p className="text-gray-600 dark:text-gray-300 mb-4">Chat with me directly</p>
+                <a
+                  href="https://wa.me/919079956406"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-full font-medium transition-colors duration-300"
+                >
+                  Message Now
+                </a>
+              </div>
+
+              {/* Call */}
+              <div className="bg-white/10 dark:bg-gray-800/80 rounded-xl p-6 text-center shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20 backdrop-blur-sm">
+                <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <FaPhone className="text-blue-600 dark:text-blue-400 text-2xl" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Call</h3>
+                <p className="text-gray-600 dark:text-gray-300 mb-4">Let's talk about your project</p>
+                <a
+                  href="tel:+919079956406"
+                  className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-full font-medium transition-colors duration-300"
+                >
+                  Call Now
+                </a>
+              </div>
+
+              {/* Instagram */}
+              <div className="bg-white/10 dark:bg-gray-800/80 rounded-xl p-6 text-center shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20 backdrop-blur-sm">
+                <div className="w-16 h-16 bg-pink-100 dark:bg-pink-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <FaInstagram className="text-pink-600 dark:text-pink-400 text-2xl" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Instagram</h3>
+                <p className="text-gray-600 dark:text-gray-300 mb-4">DM me for quick responses</p>
+                <a
+                  href="https://www.instagram.com/direct/t/17843001501580857/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block bg-pink-600 hover:bg-pink-700 text-white px-6 py-2 rounded-full font-medium transition-colors duration-300"
+                >
+                  DM Now
+                </a>
+              </div>
             </div>
 
             {/* Contact Form */}
-            <div className="max-w-2xl mx-auto bg-white/10 dark:bg-gray-700/80 rounded-2xl p-6 md:p-8 shadow-lg backdrop-blur-sm border border-white/20">
-              <h3 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white mb-4 md:mb-6 text-center">
+            <div className="max-w-2xl mx-auto bg-white/10 dark:bg-gray-700/80 rounded-2xl p-8 shadow-lg backdrop-blur-sm border border-white/20">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 text-center">
                 Send a Direct Message
               </h3>
               
@@ -759,8 +802,8 @@ const App = () => {
                   <p>I'll get back to you within 24 hours.</p>
                 </div>
               ) : (
-                <form ref={form} onSubmit={sendEmail} className="space-y-4 md:space-y-6">
-                  <div className="grid sm:grid-cols-2 gap-4 md:gap-6">
+                <form ref={form} onSubmit={sendEmail} className="space-y-6">
+                  <div className="grid sm:grid-cols-2 gap-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Your Name
@@ -768,7 +811,7 @@ const App = () => {
                       <input 
                         type="text" 
                         name="user_name"
-                        className="w-full px-3 py-2 md:px-4 md:py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/80 dark:bg-gray-800/80 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm text-sm md:text-base"
+                        className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/80 dark:bg-gray-800/80 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm"
                         placeholder="Enter your name"
                         required 
                       />
@@ -780,7 +823,7 @@ const App = () => {
                       <input 
                         type="email" 
                         name="user_email"
-                        className="w-full px-3 py-2 md:px-4 md:py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/80 dark:bg-gray-800/80 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm text-sm md:text-base"
+                        className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/80 dark:bg-gray-800/80 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm"
                         placeholder="Enter your email"
                         required 
                       />
@@ -794,7 +837,7 @@ const App = () => {
                     <input 
                       type="text" 
                       name="college"
-                      className="w-full px-3 py-2 md:px-4 md:py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/80 dark:bg-gray-800/80 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm text-sm md:text-base"
+                      className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/80 dark:bg-gray-800/80 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm"
                       placeholder="Where do you study?"
                       required 
                     />
@@ -807,7 +850,7 @@ const App = () => {
                     <textarea 
                       name="message"
                       rows="4"
-                      className="w-full px-3 py-2 md:px-4 md:py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/80 dark:bg-gray-800/80 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm text-sm md:text-base"
+                      className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/80 dark:bg-gray-800/80 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm"
                       placeholder="Tell me about your project requirements..."
                       required
                     ></textarea>
@@ -815,7 +858,7 @@ const App = () => {
                   
                   <button 
                     type="submit"
-                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 md:py-3 rounded-lg font-semibold hover:shadow-lg transform hover:scale-105 transition-all duration-300 backdrop-blur-sm text-sm md:text-base"
+                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transform hover:scale-105 transition-all duration-300 backdrop-blur-sm"
                   >
                     Send Message
                   </button>
