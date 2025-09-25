@@ -4,8 +4,13 @@ import emailjs from '@emailjs/browser';
 import { 
   FaBolt, FaHandshake, FaMoneyBillWave, FaUserGraduate, 
   FaLinkedin, FaGithub, FaEnvelope, FaWhatsapp, FaPhone, 
-  FaInstagram, FaCode, FaMobile, FaPalette, FaRocket 
+  FaInstagram, FaCode, FaMobile, FaPalette, FaRocket,
+  FaHtml5, FaCss3Alt, FaJava 
 } from "react-icons/fa";
+import {
+  SiJavascript,SiReact,SiNodedotjs,SiPython,SiCplusplus,
+  SiMongodb,SiMysql,SiFirebase,
+} from "react-icons/si";
 
 const App = () => {
   const [activeSection, setActiveSection] = useState('home');
@@ -59,8 +64,8 @@ const App = () => {
         this.x = Math.random() * canvas.width;
         this.y = Math.random() * canvas.height;
         this.size = Math.random() * 2 + 1; // Reduced size for performance
-        this.speedX = (Math.random() - 0.5) * 0.8; // Reduced speed
-        this.speedY = (Math.random() - 0.5) * 0.8;
+        this.speedX = (Math.random() - 0.5) * 0.3; // Reduced speed
+        this.speedY = (Math.random() - 0.5) * 0.3;
         this.color = isDarkMode ? 
           `hsl(${Math.random() * 60 + 200}, 70%, ${Math.random() * 30 + 50}%)` :
           `hsl(${Math.random() * 60 + 200}, 70%, ${Math.random() * 30 + 30}%)`;
@@ -290,19 +295,20 @@ const App = () => {
   ];
 
   const technologiesData = [
-    { name: "HTML", icon: "🟧", level: 95 },
-    { name: "CSS", icon: "🎨", level: 90 },
-    { name: "JavaScript", icon: "📜", level: 88 },
-    { name: "React", icon: "⚛️", level: 85 },
-    { name: "React Native", icon: "📱", level: 80 },
-    { name: "Node.js", icon: "🟢", level: 82 },
-    { name: "Python", icon: "🐍", level: 85 },
-    { name: "Java", icon: "☕", level: 78 },
-    { name: "C++", icon: "🔷", level: 75 },
-    { name: "MongoDB", icon: "🍃", level: 80 },
-    { name: "MySQL", icon: "🐬", level: 75 },
-    { name: "Firebase", icon: "🔥", level: 78 }
-  ];
+  { name: "HTML5",        icon: FaHtml5,     color: "#E34F26", level: 95 },
+  { name: "CSS3",         icon: FaCss3Alt,   color: "#1572B6", level: 90 },
+  { name: "JavaScript",   icon: SiJavascript,color: "#F7DF1E", level: 88 },
+  { name: "React",        icon: SiReact,     color: "#61DAFB", level: 85 },
+  { name: "React Native", icon: SiReact,     color: "#61DAFB", level: 80 },
+  { name: "Node.js",      icon: SiNodedotjs, color: "#339933", level: 82 },
+  { name: "Python",       icon: SiPython,    color: "#3776AB", level: 85 },
+  { name: "Java",         icon: FaJava,      color: "#007396", level: 78 },
+  { name: "C++",          icon: SiCplusplus, color: "#00599C", level: 75 },
+  { name: "MongoDB",      icon: SiMongodb,   color: "#47A248", level: 80 },
+  { name: "MySQL",        icon: SiMysql,     color: "#4479A1", level: 75 },
+  { name: "Firebase",     icon: SiFirebase,  color: "#FFCA28", level: 78 },
+];
+
 
   const servicesData = [
     {
@@ -618,26 +624,34 @@ const App = () => {
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 md:gap-6">
-              {technologiesData.map((tech, index) => (
-                <div key={index} className="bg-white/10 dark:bg-gray-700/80 rounded-xl p-3 md:p-4 text-center group hover:shadow-lg transition-all duration-300 backdrop-blur-sm border border-white/20">
-                  <div className="text-2xl md:text-3xl mb-2 group-hover:scale-110 transition-transform">
-                    {tech.icon}
-                  </div>
-                  <h3 className="font-semibold text-gray-900 dark:text-white mb-2 text-sm md:text-base">
-                    {tech.name}
-                  </h3>
-                  <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
-                    <div 
-                      className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-1000"
-                      style={{ width: `${tech.level}%` }}
-                    ></div>
-                  </div>
-                  <span className="text-xs md:text-sm text-gray-600 dark:text-gray-300 mt-1 block">
-                    {tech.level}%
-                  </span>
-                </div>
-              ))}
-            </div>
+  {technologiesData.map((tech, index) => (
+    <div
+      key={index}
+      className="bg-white/10 dark:bg-gray-700/80 rounded-xl p-3 md:p-4 text-center group hover:shadow-lg transition-all duration-300 backdrop-blur-sm border border-white/20"
+    >
+      {/* Centered icon */}
+      <div className="mb-2 flex items-center justify-center group-hover:scale-110 transition-transform">
+        <tech.icon size={48} style={{ color: tech.color }} />
+      </div>
+
+      <h3 className="font-semibold text-gray-900 dark:text-white mb-2 text-sm md:text-base">
+        {tech.name}
+      </h3>
+
+      <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+        <div
+          className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-1000"
+          style={{ width: `${tech.level}%` }}
+        ></div>
+      </div>
+
+      <span className="text-xs md:text-sm text-gray-600 dark:text-gray-300 mt-1 block">
+        {tech.level}%
+      </span>
+    </div>
+  ))}
+</div>
+
           </div>
         </section>
 
@@ -780,7 +794,7 @@ const App = () => {
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Instagram</h3>
                 <p className="text-gray-600 dark:text-gray-300 mb-4">DM me for quick responses</p>
                 <a
-                  href="https://www.instagram.com/direct/t/17843001501580857/"
+                  href="https://www.instagram.com/studhub22"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-block bg-pink-600 hover:bg-pink-700 text-white px-6 py-2 rounded-full font-medium transition-colors duration-300"
