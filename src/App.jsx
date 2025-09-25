@@ -1,5 +1,5 @@
 /* eslint-disable react/no-unescaped-entities */
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import emailjs from '@emailjs/browser';
 import { 
   FaBolt, FaHandshake, FaMoneyBillWave, FaUserGraduate, 
@@ -12,16 +12,41 @@ const App = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const form = useRef();
   const canvasRef = useRef(null);
+  const animationFrameRef = useRef(null);
 
-  // 3D Particle Background Effect
+  // Detect device type and handle resize
   useEffect(() => {
+    const checkDevice = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      
+      // Force proper viewport scaling for desktop mode on phones
+      const viewport = document.querySelector('meta[name="viewport"]');
+      if (viewport && !mobile) {
+        viewport.setAttribute('content', 'width=1200, initial-scale=0.5, maximum-scale=2.0, user-scalable=yes');
+      }
+    };
+
+    checkDevice();
+    window.addEventListener('resize', checkDevice);
+    
+    return () => {
+      window.removeEventListener('resize', checkDevice);
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, []);
+
+  // Optimized 3D Particle Background Effect
+  const initParticles = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     const ctx = canvas.getContext('2d');
-    let animationFrameId;
     let particles = [];
 
     const resizeCanvas = () => {
@@ -33,9 +58,9 @@ const App = () => {
       constructor() {
         this.x = Math.random() * canvas.width;
         this.y = Math.random() * canvas.height;
-        this.size = Math.random() * 3 + 1;
-        this.speedX = Math.random() * 1 - 0.5;
-        this.speedY = Math.random() * 1 - 0.5;
+        this.size = Math.random() * 2 + 1; // Reduced size for performance
+        this.speedX = (Math.random() - 0.5) * 0.8; // Reduced speed
+        this.speedY = (Math.random() - 0.5) * 0.8;
         this.color = isDarkMode ? 
           `hsl(${Math.random() * 60 + 200}, 70%, ${Math.random() * 30 + 50}%)` :
           `hsl(${Math.random() * 60 + 200}, 70%, ${Math.random() * 30 + 30}%)`;
@@ -45,10 +70,9 @@ const App = () => {
         this.x += this.speedX;
         this.y += this.speedY;
 
-        if (this.x > canvas.width) this.x = 0;
-        else if (this.x < 0) this.x = canvas.width;
-        if (this.y > canvas.height) this.y = 0;
-        else if (this.y < 0) this.y = canvas.height;
+        // Boundary check with bounce effect
+        if (this.x > canvas.width || this.x < 0) this.speedX *= -1;
+        if (this.y > canvas.height || this.y < 0) this.speedY *= -1;
       }
 
       draw() {
@@ -56,16 +80,15 @@ const App = () => {
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
         ctx.fill();
-
-        // Glow effect
-        ctx.shadowBlur = 15;
-        ctx.shadowColor = this.color;
       }
     }
 
     const createParticles = () => {
       particles = [];
-      const particleCount = Math.min(100, Math.floor((canvas.width * canvas.height) / 15000));
+      // Optimized particle count based on screen size and device type
+      const baseCount = isMobile ? 30 : 60;
+      const areaFactor = (canvas.width * canvas.height) / (1920 * 1080);
+      const particleCount = Math.min(baseCount, Math.floor(baseCount * areaFactor));
       
       for (let i = 0; i < particleCount; i++) {
         particles.push(new Particle());
@@ -73,9 +96,9 @@ const App = () => {
     };
 
     const connectParticles = () => {
-      const maxDistance = 150;
+      const maxDistance = isMobile ? 100 : 150;
       for (let i = 0; i < particles.length; i++) {
-        for (let j = i; j < particles.length; j++) {
+        for (let j = i + 1; j < particles.length; j++) {
           const dx = particles[i].x - particles[j].x;
           const dy = particles[i].y - particles[j].y;
           const distance = Math.sqrt(dx * dx + dy * dy);
@@ -83,9 +106,9 @@ const App = () => {
           if (distance < maxDistance) {
             const opacity = 1 - (distance / maxDistance);
             ctx.strokeStyle = isDarkMode ? 
-              `rgba(100, 150, 255, ${opacity * 0.3})` :
-              `rgba(70, 130, 255, ${opacity * 0.2})`;
-            ctx.lineWidth = 0.5;
+              `rgba(100, 150, 255, ${opacity * 0.2})` :
+              `rgba(70, 130, 255, ${opacity * 0.1})`;
+            ctx.lineWidth = 0.3;
             ctx.beginPath();
             ctx.moveTo(particles[i].x, particles[i].y);
             ctx.lineTo(particles[j].x, particles[j].y);
@@ -104,52 +127,91 @@ const App = () => {
       });
 
       connectParticles();
-      animationFrameId = requestAnimationFrame(animate);
+      animationFrameRef.current = requestAnimationFrame(animate);
     };
 
     const init = () => {
       resizeCanvas();
       createParticles();
-      animate();
+      
+      // Throttle animation for better performance
+      setTimeout(() => {
+        animate();
+      }, isMobile ? 100 : 50);
     };
 
-    // Mouse interaction
+    // Optimized mouse interaction
     const handleMouseMove = (e) => {
-      if (particles.length > 0) {
-        const mouseX = e.clientX;
-        const mouseY = e.clientY;
+      if (particles.length === 0) return;
+      
+      const mouseX = e.clientX;
+      const mouseY = e.clientY;
+      let particleMoved = false;
 
-        particles.forEach(particle => {
-          const dx = mouseX - particle.x;
-          const dy = mouseY - particle.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-          
-          if (distance < 100) {
-            const force = (100 - distance) / 100;
-            particle.x -= dx * force * 0.02;
-            particle.y -= dy * force * 0.02;
-          }
-        });
+      particles.forEach(particle => {
+        const dx = mouseX - particle.x;
+        const dy = mouseY - particle.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance < 80) {
+          const force = (80 - distance) / 80;
+          particle.x -= dx * force * 0.01;
+          particle.y -= dy * force * 0.01;
+          particleMoved = true;
+        }
+      });
+
+      // Only request new frame if particles moved
+      if (particleMoved) {
+        animationFrameRef.current = requestAnimationFrame(animate);
       }
     };
 
-    window.addEventListener('resize', resizeCanvas);
-    window.addEventListener('mousemove', handleMouseMove);
+    // Throttled event listeners
+    let resizeTimeout;
+    const handleResize = () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        resizeCanvas();
+        createParticles();
+      }, 250);
+    };
+
+    let mouseMoveTimeout;
+    const throttledMouseMove = (e) => {
+      clearTimeout(mouseMoveTimeout);
+      mouseMoveTimeout = setTimeout(() => handleMouseMove(e), 16); // ~60fps
+    };
+
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('mousemove', throttledMouseMove);
     init();
 
     return () => {
-      cancelAnimationFrame(animationFrameId);
-      window.removeEventListener('resize', resizeCanvas);
-      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('mousemove', throttledMouseMove);
+      clearTimeout(resizeTimeout);
+      clearTimeout(mouseMoveTimeout);
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
     };
-  }, [isDarkMode]);
+  }, [isDarkMode, isMobile]);
+
+  useEffect(() => {
+    initParticles();
+  }, [initParticles]);
 
   useEffect(() => {
     const handleScroll = () => {
       const sections = document.querySelectorAll('section');
+      const scrollPosition = window.scrollY + 100;
+
       sections.forEach(section => {
         const sectionTop = section.offsetTop;
-        if (window.scrollY >= sectionTop - 100) {
+        const sectionHeight = section.offsetHeight;
+        
+        if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
           setActiveSection(section.id);
         }
       });
@@ -161,8 +223,23 @@ const App = () => {
       document.documentElement.classList.add('dark');
     }
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    // Throttled scroll handler
+    let scrollTimeout;
+    const throttledScroll = () => {
+      if (!scrollTimeout) {
+        scrollTimeout = setTimeout(() => {
+          handleScroll();
+          scrollTimeout = null;
+        }, 50);
+      }
+    };
+
+    window.addEventListener('scroll', throttledScroll, { passive: true });
+    
+    return () => {
+      window.removeEventListener('scroll', throttledScroll);
+      clearTimeout(scrollTimeout);
+    };
   }, []);
 
   const toggleDarkMode = () => {
@@ -176,37 +253,38 @@ const App = () => {
     }
   };
 
+  // Optimized project data
   const projectsData = [
     {
       id: 1,
       title: "Portfolio Website",
       description: "A sleek and responsive personal portfolio site built to showcase projects, skills, and achievements.",
       technologies: ["React", "Tailwind CSS", "EmailJS"],
-      image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1171&q=80",
+      image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80", // Reduced quality
       url: "https://sumangoswami.vercel.app/"
     },
     {
       id: 2,
-      title: "Music Listening Platform",
-      description: "A modern web app for streaming and discovering music with smooth, student-friendly listening experience.",
+      title: "Music Platform",
+      description: "A modern web app for streaming and discovering music with smooth listening experience.",
       technologies: ["HTML5", "CSS3", "JavaScript"],
-      image: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
+      image: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
       url: "https://beats-snowy.vercel.app/"
     },
     {
       id: 3,
-      title: "Mental Health Care Platform",
-      description: "A student-friendly mental wellness platform focused on awareness and support with interactive modules.",
+      title: "Mental Health Platform",
+      description: "A student-friendly mental wellness platform focused on awareness and support.",
       technologies: ["HTML5", "CSS3", "JavaScript"],
-      image: "https://images.unsplash.com/photo-1501504905252-473c47e087f8?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
+      image: "https://images.unsplash.com/photo-1501504905252-473c47e087f8?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
       url: "https://vdhur.netlify.app/"
     },
     {
       id: 4,
       title: "MyRupaya Chatbot",
-      description: "AI-powered financial chatbot that helps users find the best credit cards based on their lifestyle.",
+      description: "AI-powered financial chatbot that helps users find the best credit cards.",
       technologies: ["React Native", "Firebase", "AI"],
-      image: "https://images.unsplash.com/photo-1563013544-824ae1b704d3?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
+      image: "https://images.unsplash.com/photo-1563013544-824ae1b704d3?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
       url: "https://myrupaya-ai.vercel.app/"
     }
   ];
@@ -262,9 +340,25 @@ const App = () => {
       });
   };
 
+  // Optimized image loading
+  const preloadImages = (urls) => {
+    urls.forEach(url => {
+      const img = new Image();
+      img.src = url;
+    });
+  };
+
+  useEffect(() => {
+    const imageUrls = projectsData.map(project => project.image);
+    preloadImages(imageUrls);
+  }, []);
+
   return (
     <div className="min-h-screen bg-transparent relative overflow-hidden">
-      {/* 3D Interactive Background Canvas - Full Page */}
+      {/* Viewport meta tag for proper desktop mode rendering */}
+      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+      
+      {/* Optimized 3D Interactive Background Canvas */}
       <canvas
         ref={canvasRef}
         className="fixed inset-0 w-full h-full z-0"
@@ -275,19 +369,20 @@ const App = () => {
         }}
       />
 
-      {/* Content Container with Higher Z-index */}
+      {/* Content Container with Performance Optimizations */}
       <div className="relative z-10">
-        {/* Navigation */}
-        <nav className="fixed w-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg z-50 shadow-lg">
+        {/* Optimized Navigation */}
+        <nav className="fixed w-full bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg z-50 shadow-lg border-b border-gray-200 dark:border-gray-800">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
               <div className="flex items-center space-x-2">
                 <img 
                   src="logo.png" 
                   alt="StudHub - Student Web Solutions"
-                  className="w-20 h-20 object-contain rounded-lg"
+                  className="w-16 h-16 md:w-20 md:h-20 object-contain rounded-lg"
+                  loading="lazy"
                   onError={(e) => {
-                    e.target.src = "https://images.unsplash.com/photo-1551434678-e076c223a692?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80";
+                    e.target.src = "https://images.unsplash.com/photo-1551434678-e076c223a692?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80";
                   }}
                 />
               </div>
@@ -310,29 +405,41 @@ const App = () => {
                 <button
                   onClick={toggleDarkMode}
                   className="p-2 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:scale-110 transition-transform"
+                  aria-label="Toggle dark mode"
                 >
                   {isDarkMode ? '☀️' : '🌙'}
                 </button>
               </div>
 
-              {/* Mobile Menu Button */}
-              <button
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="md:hidden p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  {isMenuOpen ? (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  ) : (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                  )}
-                </svg>
-              </button>
+              {/* Mobile Menu Buttons - Right Side */}
+              <div className="flex items-center space-x-2 md:hidden">
+                <button
+                  onClick={toggleDarkMode}
+                  className="p-2 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:scale-110 transition-transform"
+                  aria-label="Toggle dark mode"
+                >
+                  {isDarkMode ? '☀️' : '🌙'}
+                </button>
+                
+                <button
+                  onClick={() => setIsMenuOpen(!isMenuOpen)}
+                  className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300"
+                  aria-label="Toggle menu"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    {isMenuOpen ? (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    ) : (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                    )}
+                  </svg>
+                </button>
+              </div>
             </div>
 
             {/* Mobile Menu */}
             {isMenuOpen && (
-              <div className="md:hidden py-4 border-t dark:border-gray-700">
+              <div className="md:hidden py-4 border-t dark:border-gray-700 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg">
                 <div className="flex flex-col space-y-4">
                   {['home', 'services', 'projects', 'technologies', 'about', 'contact'].map((item) => (
                     <a
@@ -354,17 +461,17 @@ const App = () => {
           </div>
         </nav>
 
-        {/* Hero Section */}
+        {/* Hero Section with Optimized Layout */}
         <section id="home" className="pt-20 pb-16 md:pt-28 md:pb-24 relative min-h-screen flex items-center">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
               <div className="text-center lg:text-left">
                 <div className="inline-flex items-center px-4 py-2 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 text-sm font-medium mb-6 backdrop-blur-sm">
                   <FaUserGraduate className="mr-2" />
                   Student-Friendly Web Solutions
                 </div>
                 
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white mb-4">
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white mb-4 leading-tight">
                   <span className="block">Build Your</span>
                   <span className="block bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent pb-2">
                     Digital Presence
@@ -385,7 +492,7 @@ const App = () => {
                   </a>
                 </div>
 
-                <div className="mt-8 flex flex-wrap gap-6 justify-center lg:justify-start">
+                <div className="mt-8 flex flex-wrap gap-4 justify-center lg:justify-start">
                   <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 backdrop-blur-sm bg-white/10 dark:bg-black/10 px-3 py-2 rounded-lg">
                     <FaBolt className="text-yellow-500 mr-2" />
                     Fast Delivery
@@ -401,19 +508,14 @@ const App = () => {
                 </div>
               </div>
 
-              <div className="relative">
-                <div className="relative z-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl p-8 shadow-2xl backdrop-blur-sm">
+              <div className="relative mt-8 lg:mt-0">
+                <div className="relative z-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl p-6 md:p-8 shadow-2xl backdrop-blur-sm">
                   <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20">
-                    <FaHandshake className="text-white text-6xl mx-auto mb-4" />
-                    <h3 className="text-white text-xl font-semibold text-center mb-2">Let's Build Together!</h3>
-                    <p className="text-blue-100 text-center">Custom solutions for your college projects and startups</p>
+                    <FaHandshake className="text-white text-4xl md:text-6xl mx-auto mb-4" />
+                    <h3 className="text-white text-lg md:text-xl font-semibold text-center mb-2">Let's Build Together!</h3>
+                    <p className="text-blue-100 text-center text-sm md:text-base">Custom solutions for your college projects and startups</p>
                   </div>
                 </div>
-                
-                {/* Floating Elements */}
-                <div className="absolute -top-4 -left-4 w-24 h-24 bg-yellow-400 rounded-full opacity-20 animate-pulse backdrop-blur-sm"></div>
-                <div className="absolute -bottom-4 -right-4 w-32 h-32 bg-purple-400 rounded-full opacity-20 animate-pulse delay-1000 backdrop-blur-sm"></div>
-                <div className="absolute top-1/2 -right-8 w-16 h-16 bg-blue-300 rounded-full opacity-30 animate-bounce backdrop-blur-sm"></div>
               </div>
             </div>
           </div>
@@ -431,16 +533,16 @@ const App = () => {
               </p>
             </div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               {servicesData.map((service, index) => (
                 <div key={index} className="group bg-white/10 dark:bg-gray-800/80 rounded-xl p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-2 backdrop-blur-sm border border-white/20">
-                  <div className="w-14 h-14 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                    <service.icon className="text-white text-2xl" />
+                  <div className="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <service.icon className="text-white text-xl md:text-2xl" />
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                  <h3 className="text-lg md:text-xl font-semibold text-gray-900 dark:text-white mb-2">
                     {service.title}
                   </h3>
-                  <p className="text-gray-600 dark:text-gray-300">
+                  <p className="text-gray-600 dark:text-gray-300 text-sm md:text-base">
                     {service.description}
                   </p>
                 </div>
@@ -449,7 +551,7 @@ const App = () => {
           </div>
         </section>
 
-        {/* Projects Section */}
+        {/* Projects Section with Optimized Images */}
         <section id="projects" className="py-16 relative">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <div className="text-center mb-12">
@@ -461,7 +563,7 @@ const App = () => {
               </p>
             </div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-8">
+            <div className="grid md:grid-cols-2 gap-6 lg:gap-8">
               {projectsData.map((project) => (
                 <div key={project.id} className="group bg-white/10 dark:bg-gray-800/80 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden backdrop-blur-sm border border-white/20">
                   <div className="relative overflow-hidden">
@@ -469,28 +571,29 @@ const App = () => {
                       src={project.image} 
                       alt={project.title}
                       className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500"
+                      loading="lazy"
                     />
                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                       <button 
                         onClick={() => window.open(project.url, "_blank")}
-                        className="bg-white text-blue-600 px-6 py-2 rounded-full font-semibold transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300"
+                        className="bg-white text-blue-600 px-4 py-2 md:px-6 md:py-2 rounded-full font-semibold transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 text-sm md:text-base"
                       >
                         View Live Demo
                       </button>
                     </div>
                   </div>
                   
-                  <div className="p-6">
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
+                  <div className="p-4 md:p-6">
+                    <h3 className="text-lg md:text-xl font-bold text-gray-900 dark:text-white mb-3">
                       {project.title}
                     </h3>
-                    <p className="text-gray-600 dark:text-gray-300 mb-4">
+                    <p className="text-gray-600 dark:text-gray-300 mb-4 text-sm md:text-base">
                       {project.description}
                     </p>
                     
-                    <div className="flex flex-wrap gap-2 mb-4">
+                    <div className="flex flex-wrap gap-2">
                       {project.technologies.map((tech, index) => (
-                        <span key={index} className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 rounded-full text-sm backdrop-blur-sm">
+                        <span key={index} className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 rounded-full text-xs md:text-sm backdrop-blur-sm">
                           {tech}
                         </span>
                       ))}
@@ -514,13 +617,13 @@ const App = () => {
               </p>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 md:gap-6">
               {technologiesData.map((tech, index) => (
-                <div key={index} className="bg-white/10 dark:bg-gray-700/80 rounded-xl p-4 text-center group hover:shadow-lg transition-all duration-300 backdrop-blur-sm border border-white/20">
-                  <div className="text-3xl mb-2 group-hover:scale-110 transition-transform">
+                <div key={index} className="bg-white/10 dark:bg-gray-700/80 rounded-xl p-3 md:p-4 text-center group hover:shadow-lg transition-all duration-300 backdrop-blur-sm border border-white/20">
+                  <div className="text-2xl md:text-3xl mb-2 group-hover:scale-110 transition-transform">
                     {tech.icon}
                   </div>
-                  <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
+                  <h3 className="font-semibold text-gray-900 dark:text-white mb-2 text-sm md:text-base">
                     {tech.name}
                   </h3>
                   <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
@@ -529,7 +632,7 @@ const App = () => {
                       style={{ width: `${tech.level}%` }}
                     ></div>
                   </div>
-                  <span className="text-sm text-gray-600 dark:text-gray-300 mt-1 block">
+                  <span className="text-xs md:text-sm text-gray-600 dark:text-gray-300 mt-1 block">
                     {tech.level}%
                   </span>
                 </div>
@@ -541,7 +644,7 @@ const App = () => {
         {/* About Section */}
         <section id="about" className="py-16 relative">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
               <div>
                 <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-6">
                   About StudHub
@@ -556,46 +659,47 @@ const App = () => {
                   or a custom web application for a project, We can help bring your ideas to life.
                 </p>
 
-                <div className="grid sm:grid-cols-3 gap-6">
+                <div className="grid sm:grid-cols-3 gap-4 md:gap-6">
                   <div className="text-center backdrop-blur-sm bg-white/10 dark:bg-black/10 p-4 rounded-lg border border-white/20">
-                    <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <FaBolt className="text-blue-600 dark:text-blue-400 text-xl" />
+                    <div className="w-10 h-10 md:w-12 md:h-12 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <FaBolt className="text-blue-600 dark:text-blue-400 text-lg md:text-xl" />
                     </div>
-                    <h4 className="font-semibold text-gray-900 dark:text-white">Fast Delivery</h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-300">Quick turnaround</p>
+                    <h4 className="font-semibold text-gray-900 dark:text-white text-sm md:text-base">Fast Delivery</h4>
+                    <p className="text-xs md:text-sm text-gray-600 dark:text-gray-300">Quick turnaround</p>
                   </div>
                   <div className="text-center backdrop-blur-sm bg-white/10 dark:bg-black/10 p-4 rounded-lg border border-white/20">
-                    <div className="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <FaMoneyBillWave className="text-green-600 dark:text-green-400 text-xl" />
+                    <div className="w-10 h-10 md:w-12 md:h-12 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <FaMoneyBillWave className="text-green-600 dark:text-green-400 text-lg md:text-xl" />
                     </div>
-                    <h4 className="font-semibold text-gray-900 dark:text-white">Budget Friendly</h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-300">Student discounts</p>
+                    <h4 className="font-semibold text-gray-900 dark:text-white text-sm md:text-base">Budget Friendly</h4>
+                    <p className="text-xs md:text-sm text-gray-600 dark:text-gray-300">Student discounts</p>
                   </div>
                   <div className="text-center backdrop-blur-sm bg-white/10 dark:bg-black/10 p-4 rounded-lg border border-white/20">
-                    <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <FaHandshake className="text-purple-600 dark:text-purple-400 text-xl" />
+                    <div className="w-10 h-10 md:w-12 md:h-12 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <FaHandshake className="text-purple-600 dark:text-purple-400 text-lg md:text-xl" />
                     </div>
-                    <h4 className="font-semibold text-gray-900 dark:text-white">Direct Support</h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-300">Unlimited revisions</p>
+                    <h4 className="font-semibold text-gray-900 dark:text-white text-sm md:text-base">Direct Support</h4>
+                    <p className="text-xs md:text-sm text-gray-600 dark:text-gray-300">Unlimited revisions</p>
                   </div>
                 </div>
               </div>
 
-              <div className="relative">
-                <div className="bg-white/10 dark:bg-gray-800/80 rounded-2xl p-8 shadow-xl backdrop-blur-sm border border-white/20">
+              <div className="relative mt-8 lg:mt-0">
+                <div className="bg-white/10 dark:bg-gray-800/80 rounded-2xl p-6 md:p-8 shadow-xl backdrop-blur-sm border border-white/20">
                   <img 
                     src="logo.png" 
                     alt="StudHub - Student Web Solutions"
-                    className="w-full h-64 object-contain rounded-lg"
+                    className="w-full h-48 md:h-64 object-contain rounded-lg"
+                    loading="lazy"
                     onError={(e) => {
-                      e.target.src = "https://images.unsplash.com/photo-1551434678-e076c223a692?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80";
+                      e.target.src = "https://images.unsplash.com/photo-1551434678-e076c223a692?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80";
                     }}
                   />
-                  <div className="mt-6 text-center">
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                  <div className="mt-4 md:mt-6 text-center">
+                    <h3 className="text-lg md:text-xl font-bold text-gray-900 dark:text-white mb-2">
                       Let's Work Together!
                     </h3>
-                    <p className="text-gray-600 dark:text-gray-300">
+                    <p className="text-gray-600 dark:text-gray-300 text-sm md:text-base">
                       Get your project started today with a free consultation
                     </p>
                   </div>
@@ -618,77 +722,34 @@ const App = () => {
             </div>
 
             {/* Contact Methods */}
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-              {/* Email */}
-              <div className="bg-white/10 dark:bg-gray-800/80 rounded-xl p-6 text-center shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20 backdrop-blur-sm">
-                <div className="w-16 h-16 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <FaEnvelope className="text-red-600 dark:text-red-400 text-2xl" />
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8 md:mb-12">
+              {[
+                { icon: FaEnvelope, color: "red", label: "Email", href: "https://mail.google.com/mail/?view=cm&fs=1&to=studhub22@gmail.com", text: "Send me a detailed message" },
+                { icon: FaWhatsapp, color: "green", label: "WhatsApp", href: "https://wa.me/919079956406", text: "Chat with me directly" },
+                { icon: FaPhone, color: "blue", label: "Call", href: "tel:+919079956406", text: "Let's talk about your project" },
+                { icon: FaInstagram, color: "pink", label: "Instagram", href: "https://www.instagram.com/direct/t/17843001501580857/", text: "DM me for quick responses" }
+              ].map((method, index) => (
+                <div key={index} className="bg-white/10 dark:bg-gray-800/80 rounded-xl p-4 md:p-6 text-center shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20 backdrop-blur-sm">
+                  <div className={`w-12 h-12 md:w-16 md:h-16 bg-${method.color}-100 dark:bg-${method.color}-900 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4`}>
+                    <method.icon className={`text-${method.color}-600 dark:text-${method.color}-400 text-xl md:text-2xl`} />
+                  </div>
+                  <h3 className="text-base md:text-lg font-semibold text-gray-900 dark:text-white mb-2">{method.label}</h3>
+                  <p className="text-gray-600 dark:text-gray-300 mb-3 md:mb-4 text-sm md:text-base">{method.text}</p>
+                  <a
+                    href={method.href}
+                    target={method.href.startsWith('http') ? "_blank" : undefined}
+                    rel={method.href.startsWith('http') ? "noopener noreferrer" : undefined}
+                    className={`inline-block bg-${method.color}-600 hover:bg-${method.color}-700 text-white px-4 py-2 md:px-6 md:py-2 rounded-full font-medium transition-colors duration-300 text-sm md:text-base`}
+                  >
+                    {method.label} Now
+                  </a>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Email</h3>
-                <p className="text-gray-600 dark:text-gray-300 mb-4">Send me a detailed message</p>
-                <a
-                  href="https://mail.google.com/mail/?view=cm&fs=1&to=studhub22@gmail.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-block bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-full font-medium transition-colors duration-300"
-                >
-                  Email Now
-                </a>
-              </div>
-
-              {/* WhatsApp */}
-              <div className="bg-white/10 dark:bg-gray-800/80 rounded-xl p-6 text-center shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20 backdrop-blur-sm">
-                <div className="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <FaWhatsapp className="text-green-600 dark:text-green-400 text-2xl" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">WhatsApp</h3>
-                <p className="text-gray-600 dark:text-gray-300 mb-4">Chat with me directly</p>
-                <a
-                  href="https://wa.me/919079956406"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-block bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-full font-medium transition-colors duration-300"
-                >
-                  Message Now
-                </a>
-              </div>
-
-              {/* Call */}
-              <div className="bg-white/10 dark:bg-gray-800/80 rounded-xl p-6 text-center shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20 backdrop-blur-sm">
-                <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <FaPhone className="text-blue-600 dark:text-blue-400 text-2xl" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Call</h3>
-                <p className="text-gray-600 dark:text-gray-300 mb-4">Let's talk about your project</p>
-                <a
-                  href="tel:+919079956406"
-                  className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-full font-medium transition-colors duration-300"
-                >
-                  Call Now
-                </a>
-              </div>
-
-              {/* Instagram */}
-              <div className="bg-white/10 dark:bg-gray-800/80 rounded-xl p-6 text-center shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20 backdrop-blur-sm">
-                <div className="w-16 h-16 bg-pink-100 dark:bg-pink-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <FaInstagram className="text-pink-600 dark:text-pink-400 text-2xl" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Instagram</h3>
-                <p className="text-gray-600 dark:text-gray-300 mb-4">DM me for quick responses</p>
-                <a
-                  href="https://www.instagram.com/direct/t/17843001501580857/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-block bg-pink-600 hover:bg-pink-700 text-white px-6 py-2 rounded-full font-medium transition-colors duration-300"
-                >
-                  DM Now
-                </a>
-              </div>
+              ))}
             </div>
 
             {/* Contact Form */}
-            <div className="max-w-2xl mx-auto bg-white/10 dark:bg-gray-700/80 rounded-2xl p-8 shadow-lg backdrop-blur-sm border border-white/20">
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 text-center">
+            <div className="max-w-2xl mx-auto bg-white/10 dark:bg-gray-700/80 rounded-2xl p-6 md:p-8 shadow-lg backdrop-blur-sm border border-white/20">
+              <h3 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white mb-4 md:mb-6 text-center">
                 Send a Direct Message
               </h3>
               
@@ -698,8 +759,8 @@ const App = () => {
                   <p>I'll get back to you within 24 hours.</p>
                 </div>
               ) : (
-                <form ref={form} onSubmit={sendEmail} className="space-y-6">
-                  <div className="grid sm:grid-cols-2 gap-6">
+                <form ref={form} onSubmit={sendEmail} className="space-y-4 md:space-y-6">
+                  <div className="grid sm:grid-cols-2 gap-4 md:gap-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Your Name
@@ -707,7 +768,7 @@ const App = () => {
                       <input 
                         type="text" 
                         name="user_name"
-                        className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/80 dark:bg-gray-800/80 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm"
+                        className="w-full px-3 py-2 md:px-4 md:py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/80 dark:bg-gray-800/80 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm text-sm md:text-base"
                         placeholder="Enter your name"
                         required 
                       />
@@ -719,7 +780,7 @@ const App = () => {
                       <input 
                         type="email" 
                         name="user_email"
-                        className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/80 dark:bg-gray-800/80 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm"
+                        className="w-full px-3 py-2 md:px-4 md:py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/80 dark:bg-gray-800/80 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm text-sm md:text-base"
                         placeholder="Enter your email"
                         required 
                       />
@@ -733,7 +794,7 @@ const App = () => {
                     <input 
                       type="text" 
                       name="college"
-                      className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/80 dark:bg-gray-800/80 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm"
+                      className="w-full px-3 py-2 md:px-4 md:py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/80 dark:bg-gray-800/80 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm text-sm md:text-base"
                       placeholder="Where do you study?"
                       required 
                     />
@@ -746,7 +807,7 @@ const App = () => {
                     <textarea 
                       name="message"
                       rows="4"
-                      className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/80 dark:bg-gray-800/80 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm"
+                      className="w-full px-3 py-2 md:px-4 md:py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/80 dark:bg-gray-800/80 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm text-sm md:text-base"
                       placeholder="Tell me about your project requirements..."
                       required
                     ></textarea>
@@ -754,7 +815,7 @@ const App = () => {
                   
                   <button 
                     type="submit"
-                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transform hover:scale-105 transition-all duration-300 backdrop-blur-sm"
+                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 md:py-3 rounded-lg font-semibold hover:shadow-lg transform hover:scale-105 transition-all duration-300 backdrop-blur-sm text-sm md:text-base"
                   >
                     Send Message
                   </button>
@@ -765,31 +826,32 @@ const App = () => {
         </section>
 
         {/* Footer */}
-        <footer className="bg-gray-900/80 text-white py-12 backdrop-blur-lg relative border-t border-white/20">
+        <footer className="bg-gray-900/95 text-white py-8 md:py-12 backdrop-blur-lg relative border-t border-white/20">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <div className="grid md:grid-cols-4 gap-8 mb-8">
+            <div className="grid md:grid-cols-4 gap-6 md:gap-8 mb-6 md:mb-8">
               <div>
-                <div className="flex items-center space-x-2 mb-4">
+                <div className="flex items-center space-x-2 mb-3 md:mb-4">
                   <img 
                     src="logo.png" 
                     alt="StudHub - Student Web Solutions"
-                    className="w-28 h-28 object-contain rounded-lg"
+                    className="w-16 h-16 md:w-28 md:h-28 object-contain rounded-lg"
+                    loading="lazy"
                     onError={(e) => {
-                      e.target.src = "https://images.unsplash.com/photo-1551434678-e076c223a692?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80";
+                      e.target.src = "https://images.unsplash.com/photo-1551434678-e076c223a692?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80";
                     }}
                   />
                 </div>
-                <p className="text-gray-400">
+                <p className="text-gray-400 text-sm md:text-base">
                   Creating affordable digital solutions for students worldwide.
                 </p>
               </div>
               
               <div>
-                <h4 className="font-semibold mb-4">Quick Links</h4>
+                <h4 className="font-semibold mb-3 md:mb-4 text-base md:text-lg">Quick Links</h4>
                 <ul className="space-y-2 text-gray-400">
                   {['home', 'services', 'projects', 'about', 'contact'].map((item) => (
                     <li key={item}>
-                      <a href={`#${item}`} className="hover:text-white transition-colors">
+                      <a href={`#${item}`} className="hover:text-white transition-colors text-sm md:text-base">
                         {item.charAt(0).toUpperCase() + item.slice(1)}
                       </a>
                     </li>
@@ -798,33 +860,33 @@ const App = () => {
               </div>
               
               <div>
-                <h4 className="font-semibold mb-4">Services</h4>
+                <h4 className="font-semibold mb-3 md:mb-4 text-base md:text-lg">Services</h4>
                 <ul className="space-y-2 text-gray-400">
-                  <li>Web Development</li>
-                  <li>Mobile Apps</li>
-                  <li>UI/UX Design</li>
-                  <li>Project Deployment</li>
+                  <li className="text-sm md:text-base">Web Development</li>
+                  <li className="text-sm md:text-base">Mobile Apps</li>
+                  <li className="text-sm md:text-base">UI/UX Design</li>
+                  <li className="text-sm md:text-base">Project Deployment</li>
                 </ul>
               </div>
               
               <div>
-                <h4 className="font-semibold mb-4">Connect</h4>
-                <div className="flex space-x-4">
+                <h4 className="font-semibold mb-3 md:mb-4 text-base md:text-lg">Connect</h4>
+                <div className="flex space-x-3 md:space-x-4">
                   <a href="https://www.linkedin.com/in/utsavsingh265" className="text-gray-400 hover:text-white transition-colors">
-                    <FaLinkedin size={40} />
+                    <FaLinkedin size={isMobile ? 24 : 40} />
                   </a>
                   <a href="https://github.com/utsav370singh" className="text-gray-400 hover:text-white transition-colors">
-                    <FaGithub size={40} />
+                    <FaGithub size={isMobile ? 24 : 40} />
                   </a>
                   <a href="https://www.instagram.com/studhub22" className="text-gray-400 hover:text-white transition-colors">
-                    <FaInstagram size={40} />
+                    <FaInstagram size={isMobile ? 24 : 40} />
                   </a>
                 </div>
               </div>
             </div>
             
-            <div className="border-t border-gray-800 pt-8 text-center text-gray-400">
-              <p>&copy; {new Date().getFullYear()} StudHub. All rights reserved.</p>
+            <div className="border-t border-gray-800 pt-4 md:pt-8 text-center text-gray-400">
+              <p className="text-sm md:text-base">&copy; {new Date().getFullYear()} StudHub. All rights reserved.</p>
             </div>
           </div>
         </footer>
